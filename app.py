@@ -136,7 +136,8 @@ def login_doctor():
             "name": doc_profile.data[0]['name']
         }), 200
     except Exception as e:
-        return jsonify({"status": "error", "message": "Invalid credentials."}), 401
+        # We changed the message here to see the exact error!
+        return jsonify({"status": "error", "message": str(e)}), 401
 
 
 # ==========================================
