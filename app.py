@@ -440,7 +440,7 @@ def dispense_prescription():
 
 @app.route('/api/dashboard/stats/<uuid:clinic_id>', methods=['GET'])
 def get_dashboard_stats(clinic_id):
-    """Provides monthly statistics for patients seen and prescriptions dispensed."""
+    """Provides monthly statistics for patients seen, prescriptions dispensed, and drug types stored."""
     try:
         # Fetch patient count for this clinic
         patients_res = supabase.table('patients').select('id', count='exact').eq('clinic_id', str(clinic_id)).execute()
@@ -450,11 +450,16 @@ def get_dashboard_stats(clinic_id):
         rx_res = supabase.table('prescriptions').select('id', count='exact').eq('clinic_id', str(clinic_id)).eq('status', 'dispensed').execute()
         drugs_sold_count = rx_res.count if hasattr(rx_res, 'count') else len(rx_res.data)
 
+        # Fetch types of drugs stored in clinic inventory
+        inv_res = supabase.table('clinic_inventory').select('id', count='exact').eq('clinic_id', str(clinic_id)).execute()
+        inventory_count = inv_res.count if hasattr(inv_res, 'count') else len(inv_res.data)
+
         return jsonify({
             "status": "success",
             "data": {
                 "total_patients_registered": patient_count,
-                "total_prescriptions_dispensed": drugs_sold_count
+                "total_prescriptions_dispensed": drugs_sold_count,
+                "total_drug_types_stored": inventory_count
             }
         }), 200
     except Exception as e:
