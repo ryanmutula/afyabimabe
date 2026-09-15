@@ -3,6 +3,7 @@ import json
 import re
 from datetime import datetime
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from supabase import create_client, Client
 from google import genai
 from dotenv import load_dotenv
@@ -10,6 +11,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+
+CORS(app)
 
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
@@ -430,6 +433,15 @@ def dispense_prescription():
             supabase.table('clinic_inventory').update({"stock_quantity": new_stock}).eq('clinic_id', clinic_id).eq('drug_id', drug_id).execute()
 
         return jsonify({"status": "success", "message": "Prescription dispensed and inventory updated.", "data": rx_res.data}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/queue/prescriptions/<uuid:clinic_id>', methods=['GET'])
+def get_prescription_queue(clinic_id):
+    """Fetches all pending prescriptions for the clinic's pharmacy queue."""
+    try:
+        response = supabase.table('prescriptions').select('*').eq('clinic_id', str(clinic_id)).eq('status', 'pending_dispense').execute()
+        return jsonify({"status": "success", "data": response.data}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
